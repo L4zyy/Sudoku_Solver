@@ -1,4 +1,5 @@
 #%%
+
 from pathlib import Path, PurePath
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,42 +13,24 @@ from torchvision import datasets, utils
 
 import cv2
 
-seg_data_dir = PurePath('data', 'segmentation_data')
-image_path = Path(Path.joinpath(seg_data_dir, 'images'))
-mask_path = Path(Path.joinpath(seg_data_dir, 'masks'))
-
-#%%
-
-# image_files = []
-# for img_name in image_path.iterdir():
-#     img = plt.imread(img_name.as_posix())
-#     image_files.append(img)
-# 
-# mask_files = []
-# for mask_name in mask_path.iterdir():
-#     mask = plt.imread(mask_name.as_posix())
-#     mask_files.append(mask)
-
-#%%
-
 def show_mask(image, mask):
     plt.imshow(image)
     plt.imshow(mask, cmap='gray', alpha=0.5)
 
-#%%
-transform = T.Compose([T.Resize((512, 512)), T.CenterCrop(512), T.ToTensor()])
-
 class SudokuDataset(Dataset):
     """Sudoku Segmentation dataset."""
     
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, seg_data_dir, transform=None):
         """
         Args:
             root_dir (string): Directory with all images and masks.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
-        self.root_dir = root_dir
+        self.seg_data_dir = seg_data_dir
         self.transform = transform
+
+        image_path = Path(Path.joinpath(seg_data_dir, 'images'))
+        mask_path = Path(Path.joinpath(seg_data_dir, 'masks'))
 
         self.images = [img for img in image_path.iterdir() if img.is_file()]
         self.masks = [mask for mask in mask_path.iterdir() if mask.is_file()]
@@ -69,38 +52,7 @@ class SudokuDataset(Dataset):
         
         return sample
 
-
-# %%
-sudoku_dataset = SudokuDataset(seg_data_dir, transform=transform)
-
-for i in range(len(sudoku_dataset)):
-    sample = sudoku_dataset[i]
-    print(i, ' ', sample['image'].shape, sample['mask'].shape)
-
-# %%
-
-plt.figure()
-show_mask(sample['image'].permute(1, 2, 0).numpy(), sample['mask'].squeeze().numpy())
-plt.show()
-
-#%%
-
-img = plt.imread('data/segmentation_data/images/0012_01.jpg')
-mask = sample['mask'].squeeze().numpy()
-height, width, _ = img.shape
-size = min(height, width)
-img = img[int((height-size)/2) : int((height - size)/2) + size,
-          int((width - size)/2) : int((width - size)/2) + size]
-mask = cv2.resize(mask, (size, size))
-plt.figure()
-show_mask(img, mask)
-plt.show()
-
-# %%
-
-sudoku_data_loader = DataLoader(sudoku_dataset, batch_size=4, shuffle=True)
-
-def show_sudoku_batch(sample_batch):
+def show_sudoku_batch(sample_batched):
     """Show image with mask for a batch of samples"""
     images_batch, masks_batch = sample_batched['image'], sample_batched['mask']
     batch_size = len(images_batch)
@@ -113,13 +65,26 @@ def show_sudoku_batch(sample_batch):
     plt.imshow(image_grid.numpy().transpose(1, 2, 0))
     plt.imshow(mask_grid.numpy().transpose(1, 2, 0), alpha=0.5)
 
-for i_batch, sample_batched in enumerate(sudoku_data_loader):
-    print(i_batch, sample_batched['image'].size(), sample_batched['mask'].size())
+if __name__ == "__main__":
+    seg_data_dir = PurePath('data', 'segmentation_data')
 
-    plt.figure()
-    show_sudoku_batch(sample_batched)
-    plt.axis('off')
-    plt.ioff()
-    plt.show()
+    transform = T.Compose([T.Resize((512, 512)), T.CenterCrop(512), T.ToTensor()])
 
-# %%
+    sudoku_dataset = SudokuDataset(seg_data_dir, transform=transform)
+
+    train_size =int(0.8*len(sudoku_dataset))
+    val_size = len(sudoku_dataset) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(sudoku_dataset, [train_size, val_size])
+
+    print(len(train_dataset), ' ', len(val_dataset))
+
+    sudoku_data_loader = DataLoader(val_dataset, batch_size=3, shuffle=True)
+
+    for i_batch, sample_batched in enumerate(sudoku_data_loader):
+        print(i_batch, sample_batched['image'].size(), sample_batched['mask'].size())
+
+        plt.figure()
+        show_sudoku_batch(sample_batched)
+        plt.axis('off')
+        plt.ioff()
+        plt.show()
