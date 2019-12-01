@@ -1,4 +1,5 @@
 import time
+import datetime
 
 def timer(func):
     def wrapper(*args, **keyArgs):
@@ -12,6 +13,10 @@ def timer(func):
         return ret
 
     return wrapper
+
+def get_model_timestamp():
+    ts = time.time()
+    return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%Hh%M')
 
 if __name__ == "__main__":
     @timer

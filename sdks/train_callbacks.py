@@ -73,3 +73,18 @@ class TensorboardLoggerCallback(Callback):
         writer.add_scalar('data/val_loss', kwargs['val_loss'], epoch_id)
         writer.add_scalar('data/val_dice_coeff', kwargs['val_dice_coeff'], epoch_id)
         writer.close()
+
+class ModelSaverCallback(Callback):
+    def __init__(self, path, verbose=False):
+        self.verbose = verbose
+        self.path = path
+    
+    def __call__(self, *args, **kwargs):
+        if kwargs['step_name'] != 'train':
+            return
+        
+        net = kwargs['net']
+        torch.save(net.state_dict(), self.path)
+
+        if self.verbose:
+            print("Model saved in {}".format(self.path))

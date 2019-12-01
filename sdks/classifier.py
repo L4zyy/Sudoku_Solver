@@ -19,6 +19,9 @@ class SudokuClassifier:
     
     def restore_model(self, path):
         self.net.load_state_dict(torch.load(path))
+        if self.use_cuda:
+            self.net.cuda()
+        
 
     def _criterion(self, logits, labels):
         return losses_utils.BinaryCrossEntropyLoss().forward(logits, labels) + losses_utils.SoftDiceLoss().forward(logits, labels)
@@ -137,6 +140,44 @@ class SudokuClassifier:
                    net=self.net,
                    epoch_id=self.epoch_count + 1,
                    )
+    
+    def predict_one(self, image, threshold=0.5):
+        self.net.eval()
 
-    def predict(self, test_loader):
-        pass
+        if self.use_cuda:
+            image = image.cuda()
+        
+        # forward
+        logits = self.net(image)
+        probs = F.sigmoid(logits)
+        probs = probs.data.cpu().numpy()
+        mask = probs > threshold
+
+        return mask
+
+    def predict(self, test_loader, callbacks=None):
+        self.net.eval()
+
+        it_num = len(test_loader)
+
+        with tqdm(total=it_num, desc="Classifying") as pbar:
+            for idx, sample in enumerate(test_loader):
+                inputs = sample['image']
+                if self.use_cuda:
+                    inputs = inputs.cuda()
+                
+                # forward
+                logits = self.net(inputs)
+                probs = F.sigmoid(logits)
+                probs = probs.data.cpu().numpy()
+
+                if callbacks:
+                    for cb in callbacks:
+                        cb(
+                            step_name='predict',
+                            net=self.net,
+                            probs=probs,
+                            file_index=idx
+                        )
+
+                pbar.update(1)
