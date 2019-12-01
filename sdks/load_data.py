@@ -50,6 +50,8 @@ class SudokuDataset(Dataset):
             sample['image'] = self.transform(sample['image'])
             sample['mask'] = self.transform(sample['mask'])
         
+        sample['mask'][sample['mask'] != 0] = 1
+        
         return sample
 
 def show_sudoku_batch(sample_batched):

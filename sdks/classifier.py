@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+import numpy as np
 from collections import OrderedDict
 
 from tqdm import tqdm
@@ -50,8 +51,10 @@ class SudokuClassifier:
                 losses.update(loss, batch_size)
                 dice_coeffs.update(acc, batch_size)
                 pbar.update(1)
+            
+            targets = np.squeeze(targets, axis=0)
         
-        return losses.avg, dice_coeffs.avg, acc
+        return losses.avg, dice_coeffs.avg, inputs, targets, preds
 
     def _train_epoch(self, train_loader, optimizer, threshold):
         losses = tools.AverageMeter()
@@ -97,25 +100,43 @@ class SudokuClassifier:
         return losses.avg, dice_coeffs.avg
 
     @helpers.timer
-    def _run_epoch(self, train_loader, val_loader, optimizer, threshold=0.5):
+    def _run_epoch(self, train_loader, val_loader, optimizer, threshold=0.5, callbacks=None):
         self.net.train()
         train_loss, train_dice_coeff = self._train_epoch(train_loader, optimizer, threshold)
 
         self.net.eval()
-        val_loss, val_dice_coeff, acc = self._val_epoch(val_loader, threshold)
+        val_loss, val_dice_coeff, last_images, last_targets, last_preds = self._val_epoch(val_loader, threshold)
+
+        if callbacks:
+            for cb in callbacks:
+                cb(
+                   step_name="epoch",
+                   net=self.net,
+                   last_val_batch=(last_images, last_targets, last_preds),
+                   epoch_id=self.epoch_count + 1,
+                   train_loss=train_loss, train_dice_coeff=train_dice_coeff,
+                   val_loss=val_loss, val_dice_coeff=val_dice_coeff
+                   )
 
         print("train_loss = {:03f}, train_dice_coeff = {:03f}\n"
-              "val_loss   = {:03f}, val_dice_coeff   = {:03f}\n"
-              "val_acc   = {:03f}"
-              .format(train_loss, train_dice_coeff, val_loss, val_dice_coeff, acc))
+              "val_loss   = {:03f}, val_dice_coeff   = {:03f}"
+              .format(train_loss, train_dice_coeff, val_loss, val_dice_coeff))
         self.epoch_count += 1
 
-    def train(self, train_loader, val_loader, optimizer, epochs, threshold=0.5):
+    def train(self, train_loader, val_loader, optimizer, epochs, threshold=0.5, callbacks=None):
         if self.use_cuda:
             self.net.cuda()
         
         for epoch in range(epochs):
-            self._run_epoch(train_loader, val_loader, optimizer, threshold)
+            self._run_epoch(train_loader, val_loader, optimizer, threshold, callbacks)
+        
+        if callbacks:
+            for cb in callbacks:
+                cb(
+                   step_name="train",
+                   net=self.net,
+                   epoch_id=self.epoch_count + 1,
+                   )
 
     def predict(self, test_loader):
         pass
