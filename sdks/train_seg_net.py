@@ -76,5 +76,8 @@ mask = cv2.resize(mask, (width, height))
 
 result = cv2.addWeighted(mask, 0.5, image, 0.5, 0.)
 
+mask = mask[:, :, 0]
+cv2.imwrite('mask_1.png', mask)
+
 plt.imshow(result)
 plt.show()
