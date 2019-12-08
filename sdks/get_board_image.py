@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import pickle
 
 def thresholding(image):
     if len(image.shape) > 2:
@@ -102,10 +103,8 @@ warp = cv2.warpPerspective(image, retval, (rect_size, rect_size))
 sep = separate_num_pads(warp, pad_size)
 
 pads = get_num_pads(warp, pad_size)
-
-for pad in pads:
-    plt.imshow(pad)
-    plt.show()
+with open('data/num_pads.txt', 'wb') as fp:
+    pickle.dump(pads, fp)
 
 height, width, _ = image.shape
 height = int(height/3)

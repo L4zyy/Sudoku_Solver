@@ -39,7 +39,7 @@ tb_viz_cb = TensorboardVisualizerCallback(Path('logs/images'))
 tb_log_cb = TensorboardLoggerCallback(Path('logs'))
 model_saver_cb = ModelSaverCallback('output/models/model_' + helpers.get_model_timestamp(), verbose=True)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # summary(model, (3, 512, 512))
 
