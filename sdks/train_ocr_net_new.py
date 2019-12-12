@@ -15,13 +15,15 @@ from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm
 
+from nn.vgg import VGG_like
+
 import helpers
 
 # Hyperparameters
 train_ratio = 0.6
 batch_size = 64
 lr = 1e-4
-epochs = 15
+epochs = 25
 n_classes = 10
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,18 +48,7 @@ val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
 print('train size: {', len(train_loader.dataset), '}, val size: {', len(val_loader.dataset), '}')
 
-model = torchvision.models.vgg16_bn(pretrained=False)
-model.classifier = nn.Sequential(
-    nn.Linear(25088, 256),
-    nn.ReLU(),
-    nn.Dropout(0.4),
-    nn.Linear(256, 64),
-    nn.ReLU(),
-    nn.Dropout(0.4),
-    nn.Linear(64, n_classes),
-    nn.LogSoftmax(dim=1)
-)
-model = model.to(device)
+model = VGG_like(16).to(device)
 
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=0.05)
 
@@ -128,4 +119,4 @@ def train():
     tb.close()
         
 train()
-torch.save(model, 'data/num_model')
+torch.save(model.state_dict(), 'data/num_model')
