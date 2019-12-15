@@ -12,51 +12,6 @@ def thresholding(image):
 
     return result
 
-image = cv2.imread('data/image_1.jpg')
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-canny = cv2.Canny(gray, 100, 200)
-mask = cv2.imread('data/mask_1.png', cv2.IMREAD_GRAYSCALE)
-
-kernel = np.ones((20, 20), np.uint8)
-mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel, iterations=5)
-
-mask_3c = np.dstack((mask, mask, mask))
-mix = cv2.addWeighted(image, 0.4, mask_3c, 0.6, 0.)
-
-kernel = np.ones((3, 3), np.uint8)
-edges = cv2.dilate(canny, kernel, iterations=1)
-kernel = np.ones((3, 3), np.uint8)
-edges = cv2.erode(edges, kernel, iterations=1)
-
-target_img = np.zeros_like(edges)
-target_img[mask!=0] = edges[mask!=0]
-target_img = thresholding(target_img)
-target_img[mask==0] = 0
-
-cnts, _ = cv2.findContours(target_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-best_approx = None
-max_area = 0
-area_threshold = 100
-if len(cnts) == 0:
-    print("No contours were found.")
-else:
-    for c in cnts:
-        area = cv2.contourArea(c)
-        if area > area_threshold:
-            perimeter = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.02*perimeter, True)
-            if area > max_area and len(approx) == 4:
-                best_approx = approx
-                max_area = area
-
-
-detection_img = np.copy(image)
-cv2.drawContours(detection_img, [best_approx], 0, (0, 255, 0), 3)
-for point in best_approx:
-    x = point[0][0]
-    y = point[0][1]
-    cv2.circle(detection_img, (x, y), 3, (0, 0, 255), -1)
-
 def rectify(approx):
     approx = approx.reshape((4, 2))
     approx_new = np.zeros((4, 2), dtype=np.float32)
@@ -93,35 +48,90 @@ def get_num_pads(img, step):
 
     return pads
 
-best_approx = rectify(best_approx)
-pad_size = 64
-rect_size = 9 * pad_size
-target_rect = np.array([[0, 0], [rect_size-1, 0], [rect_size-1, rect_size-1], [0, rect_size-1]], np.float32)
-retval = cv2.getPerspectiveTransform(best_approx, target_rect)
-warp = cv2.warpPerspective(image, retval, (rect_size, rect_size))
-sep = separate_num_pads(warp, pad_size)
+def get_board_image(image, mask, verbose=False):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    canny = cv2.Canny(gray, 100, 200)
 
-pads = get_num_pads(warp, pad_size)
-with open('data/num_pads.txt', 'wb') as fp:
-    np.save(fp, pads)
+    kernel = np.ones((20, 20), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel, iterations=5)
 
-height, width, _ = image.shape
-height = int(height/3)
-width = int(width/3)
+    mask_3c = np.dstack((mask, mask, mask))
+    mix = cv2.addWeighted(image, 0.4, mask_3c, 0.6, 0.)
 
-image_show = cv2.resize(image, (width, height))
-mask_show = cv2.resize(mask_3c, (width, height))
-mix_show = cv2.resize(mix, (width, height))
-# canny_show = cv2.resize(canny, (width, height))
-canny_show = canny
+    kernel = np.ones((3, 3), np.uint8)
+    edges = cv2.dilate(canny, kernel, iterations=1)
+    kernel = np.ones((3, 3), np.uint8)
+    edges = cv2.erode(edges, kernel, iterations=1)
 
-cv2.imshow('image', image_show)
-cv2.imshow('mask', mask_show)
-cv2.imshow('mix', mix_show)
-cv2.imshow('target', target_img)
-cv2.imshow('detection', detection_img)
-cv2.imshow('warp', warp)
-cv2.imshow('sep', sep)
-cv2.imshow('pad', pads[0])
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    target_img = np.zeros_like(edges)
+    target_img[mask!=0] = edges[mask!=0]
+    target_img = thresholding(target_img)
+    target_img[mask==0] = 0
+
+    cnts, _ = cv2.findContours(target_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    best_approx = None
+    max_area = 0
+    area_threshold = 100
+    if len(cnts) == 0:
+        print("No contours were found.")
+    else:
+        for c in cnts:
+            area = cv2.contourArea(c)
+            if area > area_threshold:
+                perimeter = cv2.arcLength(c, True)
+                approx = cv2.approxPolyDP(c, 0.02*perimeter, True)
+                if area > max_area and len(approx) == 4:
+                    best_approx = approx
+                    max_area = area
+
+
+    detection_img = np.copy(image)
+    cv2.drawContours(detection_img, [best_approx], 0, (0, 255, 0), 3)
+    for point in best_approx:
+        x = point[0][0]
+        y = point[0][1]
+        cv2.circle(detection_img, (x, y), 3, (0, 0, 255), -1)
+
+
+    contour = best_approx
+    best_approx = rectify(best_approx)
+    pad_size = 64
+    rect_size = 9 * pad_size
+    target_rect = np.array([[0, 0], [rect_size-1, 0], [rect_size-1, rect_size-1], [0, rect_size-1]], np.float32)
+    retval = cv2.getPerspectiveTransform(best_approx, target_rect)
+    retransform = cv2.getPerspectiveTransform(target_rect, best_approx)
+    warp = cv2.warpPerspective(image, retval, (rect_size, rect_size))
+    sep = separate_num_pads(warp, pad_size)
+
+    pads = get_num_pads(warp, pad_size)
+    # with open('data/num_pads.txt', 'wb') as fp:
+    #     np.save(fp, pads)
+
+    height, width, _ = image.shape
+    height = int(height/3)
+    width = int(width/3)
+
+    image_show = cv2.resize(image, (width, height))
+    mask_show = cv2.resize(mask_3c, (width, height))
+    mix_show = cv2.resize(mix, (width, height))
+    # canny_show = cv2.resize(canny, (width, height))
+    canny_show = canny
+
+    if verbose:
+        cv2.imshow('image', image_show)
+        cv2.imshow('mask', mask_show)
+        cv2.imshow('mix', mix_show)
+        cv2.imshow('target', target_img)
+        cv2.imshow('detection', detection_img)
+        cv2.imshow('warp', warp)
+        cv2.imshow('sep', sep)
+        cv2.imshow('pad', pads[0])
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return pads, warp, retransform, contour
+
+if __name__ == "__main__":
+    image = cv2.imread('data/image_2.jpg')
+    mask = cv2.imread('data/mask_2.png', cv2.IMREAD_GRAYSCALE)
+    get_board_image(image, mask, True)

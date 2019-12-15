@@ -62,13 +62,13 @@ optimizer = optim.Adam(net.parameters(), lr=lr)
 # 
 # classifier.train(train_loader, val_loader, optimizer, epochs, callbacks=[tb_viz_cb, tb_log_cb, model_saver_cb])
 
-classifier.restore_model('data\model')
+classifier.restore_model('data\seg_model')
 
-image = Image.open(Path.joinpath(seg_data_dir, 'images', '0001_01.jpg').as_posix())
+image = Image.open(Path.joinpath(seg_data_dir, 'images', '0007_05.jpg').as_posix())
 img = transform(image).unsqueeze(0)
 mask = np.squeeze(classifier.predict_one(img))
 
-image = plt.imread(Path.joinpath(seg_data_dir, 'images', '0001_01.jpg').as_posix())
+image = plt.imread(Path.joinpath(seg_data_dir, 'images', '0007_05.jpg').as_posix())
 height, width, _ = image.shape
 mask = np.dstack((mask, mask, mask)) * np.array([255, 255, 255])
 mask = mask.astype(np.uint8)
@@ -77,7 +77,7 @@ mask = cv2.resize(mask, (width, height))
 result = cv2.addWeighted(mask, 0.5, image, 0.5, 0.)
 
 mask = mask[:, :, 0]
-cv2.imwrite('mask_1.png', mask)
+cv2.imwrite('mask_2.png', mask)
 
 plt.imshow(result)
 plt.show()
