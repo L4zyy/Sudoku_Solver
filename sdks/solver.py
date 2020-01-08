@@ -10,8 +10,8 @@ from torchvision import transforms as T
 import cv2
 from PIL import Image
 
-from sdks.nn.unet import UNet
-from sdks.nn.vgg import VGG_like
+from models.unet import UNet
+from models.vgg import VGG_like
 from sdks.classifier import SudokuClassifier
 from sdks.get_board_image import get_board_image
 from sdks.get_board_matrix import get_board_matrix
@@ -20,7 +20,7 @@ import sdks.sudoku_engine as engine
 
 class sdkSolver():
     def __init__(self, seg_model_path, ocr_model_path):
-        self.seg_model = UNet((3, 512, 512))
+        self.seg_model = UNet((3, 512, 512), 32)
         self.ocr_model = VGG_like(16)
         
         self.seg_model.load_state_dict(torch.load(seg_model_path))
@@ -66,7 +66,7 @@ class sdkSolver():
         # mask = cv2.imread('data/mask_2.png', cv2.IMREAD_GRAYSCALE)
         print(mask.shape)
 
-        pads, warp, retransform, contour = get_board_image(image, mask)
+        pads, warp, retransform, contour = get_board_image(image, mask, True)
     
         # with open('data/num_pads.txt', 'wb') as fp:
         #     np.save(fp, pads)

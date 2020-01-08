@@ -10,7 +10,7 @@ import torchvision.transforms as T
 
 import cv2
 
-from sdks.nn.vgg import VGG_like
+from models.vgg import VGG_like
 import sdks.sudoku_engine as engine
 
 #%%
@@ -23,10 +23,42 @@ def get_board_matrix(pads):
     model.load_state_dict(torch.load('data/ocr_model'))
     model.eval()
     
-    # show one pad
-    # image = cv2.cvtColor(pads[3], cv2.COLOR_BGR2RGB)
-    # print(image.sum())
-    # # plt.imshow(image)
+    # show some pads
+    fig = plt.figure()
+    image = cv2.cvtColor(pads[0], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 1)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[1], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 2)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[2], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 3)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[3], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 4)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[4], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 5)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[5], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 6)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[6], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 7)
+    plt.axis('off')
+    plt.imshow(image)
+    image = cv2.cvtColor(pads[10], cv2.COLOR_BGR2RGB)
+    plt.subplot(2, 4, 8)
+    plt.axis('off')
+    plt.imshow(image)
+
+    plt.show()
     
     board = []
     
@@ -59,3 +91,6 @@ if __name__ == "__main__":
 
     engine.solve(board)
     print(board)
+
+
+# %%

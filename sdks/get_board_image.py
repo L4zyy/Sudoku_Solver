@@ -129,6 +129,9 @@ def get_board_image(image, mask, verbose=False):
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+        # cv2.imwrite('detection.png', detection_img)
+        # cv2.imwrite('warp.png', warp)
+
     return pads, warp, retransform, contour
 
 if __name__ == "__main__":
