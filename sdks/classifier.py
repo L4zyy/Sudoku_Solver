@@ -6,9 +6,9 @@ import numpy as np
 from collections import OrderedDict
 
 from tqdm import tqdm
-import utils.helpers as helpers
-import utils.tools as tools
-import utils.losses as losses_utils 
+import sdks.utils.helpers as helpers
+import sdks.utils.tools as tools
+import sdks.utils.losses as losses_utils 
 
 class SudokuClassifier:
     def __init__(self, net, max_epochs):

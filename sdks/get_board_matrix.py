@@ -10,12 +10,12 @@ import torchvision.transforms as T
 
 import cv2
 
-from models.vgg import VGG_like
+from sdks.models.vgg import VGG_like
 import sdks.sudoku_engine as engine
 
 #%%
 
-def get_board_matrix(pads):
+def get_board_matrix(pads, verbose=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_classes = 10
     
@@ -24,41 +24,42 @@ def get_board_matrix(pads):
     model.eval()
     
     # show some pads
-    fig = plt.figure()
-    image = cv2.cvtColor(pads[0], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 1)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[1], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 2)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[2], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 3)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[3], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 4)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[4], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 5)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[5], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 6)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[6], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 7)
-    plt.axis('off')
-    plt.imshow(image)
-    image = cv2.cvtColor(pads[10], cv2.COLOR_BGR2RGB)
-    plt.subplot(2, 4, 8)
-    plt.axis('off')
-    plt.imshow(image)
+    if verbose:
+        fig = plt.figure()
+        image = cv2.cvtColor(pads[0], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 1)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[1], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 2)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[2], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 3)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[3], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 4)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[4], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 5)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[5], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 6)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[6], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 7)
+        plt.axis('off')
+        plt.imshow(image)
+        image = cv2.cvtColor(pads[10], cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 4, 8)
+        plt.axis('off')
+        plt.imshow(image)
 
-    plt.show()
+        plt.show()
     
     board = []
     

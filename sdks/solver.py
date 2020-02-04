@@ -10,8 +10,8 @@ from torchvision import transforms as T
 import cv2
 from PIL import Image
 
-from models.unet import UNet
-from models.vgg import VGG_like
+from sdks.models.unet import UNet
+from sdks.models.vgg import VGG_like
 from sdks.classifier import SudokuClassifier
 from sdks.get_board_image import get_board_image
 from sdks.get_board_matrix import get_board_matrix
@@ -34,9 +34,9 @@ class sdkSolver():
         self.current_image = None
         self.current_image = None
     
-    def solve(self, image):
+    def solve(self, image, verbose=False):
         classifier = SudokuClassifier(self.seg_model, 0)
-        classifier.restore_model('data\seg_model')
+        # classifier.restore_model('data/seg_model')
 
         size = 512
         input_img_resize = (size, size)
@@ -66,7 +66,7 @@ class sdkSolver():
         # mask = cv2.imread('data/mask_2.png', cv2.IMREAD_GRAYSCALE)
         print(mask.shape)
 
-        pads, warp, retransform, contour = get_board_image(image, mask, True)
+        pads, warp, retransform, contour = get_board_image(image, mask, verbose)
     
         # with open('data/num_pads.txt', 'wb') as fp:
         #     np.save(fp, pads)
@@ -95,9 +95,10 @@ class sdkSolver():
         background = cv2.bitwise_and(image, bg_mask)
         re_img = cv2.add(re_img, background)
         
-        cv2.imshow('answer', warp)
-        cv2.imshow('background', background)
         cv2.imshow('retransform', re_img)
+        if verbose:
+            cv2.imshow('answer', warp)
+            cv2.imshow('background', background)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
